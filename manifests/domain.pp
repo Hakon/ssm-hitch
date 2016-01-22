@@ -9,6 +9,11 @@ define hitch::domain (
   $cacert_source    = undef,
   $cert_content     = undef,
   $cert_source      = undef,
+  $config_root      = $::hitch::config::config_root,
+  $config_file      = $::hitch::config::config_file,
+  $owner            = $::hitch::config::file_owner,
+  $group            = $::hitch::config::group,
+  $dhparams_file    = $::hitch::config::dhparams_file,
   $dhparams_content = undef,
   $dhparams_source  = undef,
   $key_content      = undef,
@@ -57,14 +62,19 @@ define hitch::domain (
     $_dhparams_content="${dhparams_content}\n"
   }
 
+  if ! defined(Class['hitch::config']) {
+    fail('You must include the hitch::config class before using hitch::domain')
+  }
 
-  include ::hitch
-  include ::hitch::config
+  if defined(Class['hitch::service']) {
+    $service_notify = [Class['hitch::service']]
+  } else {
+    $service_notify = []
+  }
 
-  $config_file = $::hitch::config_file
   validate_absolute_path($config_file)
 
-  $pem_file="${::hitch::config_root}/${title}.pem"
+  $pem_file="${config_root}/${title}.pem"
   validate_absolute_path($pem_file)
 
 
@@ -72,7 +82,7 @@ define hitch::domain (
   concat::fragment { "hitch::domain ${title}":
     target  => $config_file,
     content => "pem-file = \"${pem_file}\"\n",
-    notify  => Class['hitch::service'],
+    notify  => $service_notify,
   }
 
   # Create the pem file, with (optional) ca certificate chain, a
@@ -82,7 +92,7 @@ define hitch::domain (
     mode   => '0640',
     owner  => $::hitch::file_owner,
     group  => $::hitch::group,
-    notify => Class['hitch::service'],
+    notify => $service_notify,
   }
 
   concat::fragment {"${title} key":
@@ -113,8 +123,8 @@ define hitch::domain (
       $_dhparams_source = $dhparams_source
     }
     else {
-      $_dhparams_source = $::hitch::dhparams_file
-      File[$::hitch::dhparams_file] -> Concat::Fragment["${title} dhparams"]
+      $_dhparams_source = $dhparams_file
+      File[$dhparams_file] -> Concat::Fragment["${title} dhparams"]
     }
   }
 

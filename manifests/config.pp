@@ -2,57 +2,73 @@
 #
 # This class is called from hitch for service config.
 #
-class hitch::config {
+class hitch::config(
+  $config_root       = $::hitch::params::config_root,
+  $purge_config_root = $::hitch::params::purge_config_root,
+  $owner             = $::hitch::params::file_owner,
+  $group             = $::hitch::params::group,
+  $config_file       = $::hitch::params::config_file,
+  $dhparams_file     = $::hitch::params::dhparams_file,
+  $dhparams_content  = $::hitch::params::dhparams_content,
+  $domains           = $::hitch::params::domains,
+) inherits ::hitch::params {
 
-  validate_absolute_path($::hitch::config_root)
-  validate_absolute_path($::hitch::config_file)
-  validate_absolute_path($::hitch::dhparams_file)
+  validate_absolute_path($config_root)
+  validate_absolute_path($config_file)
+  validate_absolute_path($dhparams_file)
 
-  if $::hitch::dhparams_content {
-    validate_re($::hitch::dhparams_content, 'BEGIN DH PARAMETERS')
+  if $dhparams_content {
+    validate_re($dhparams_content, 'BEGIN DH PARAMETERS')
   }
 
-  file { $::hitch::config_root:
+  file { $config_root:
     ensure  => directory,
     recurse => true,
-    purge   => $::hitch::purge_config_root,
-    owner   => $::hitch::file_owner,
-    group   => $::hitch::group,
+    purge   => $purge_config_root,
+    owner   => $owner,
+    group   => $group,
     mode    => '0750',
   }
 
-  concat { $::hitch::config_file:
+  concat { $config_file:
     ensure => present,
   }
 
-  if $::hitch::dhparams_content {
-    file { $::hitch::dhparams_file:
+  if $dhparams_content {
+    file { $dhparams_file:
       ensure  => present,
-      owner   => $::hitch::file_owner,
-      group   => $::hitch::group,
+      owner   => $owner,
+      group   => $group,
       mode    => '0640',
-      content => $::hitch::dhparams_content,
+      content => $dhparams_content,
     }
   }
   else {
     exec { "${title} generate dhparams":
       path    => '/usr/local/bin:/usr/bin:/bin',
-      command => "openssl dhparam 2048 -out ${::hitch::dhparams_file}",
-      creates => $::hitch::dhparams_file,
+      command => "openssl dhparam 2048 -out ${dhparams_file}",
+      creates => $dhparams_file,
     }
     ->
-    file { $::hitch::dhparams_file:
+    file { $dhparams_file:
       ensure => present,
-      owner  => $::hitch::file_owner,
-      group  => $::hitch::group,
+      owner  => $owner,
+      group  => $group,
       mode   => '0640',
     }
   }
 
   concat::fragment { "${title} config":
     content => template('hitch/hitch.conf.erb'),
-    target  => $::hitch::config_file,
+    target  => $config_file,
   }
 
-  create_resources('hitch::domain', $::hitch::domains)
+  $domain_defaults = {
+    config_root   => $config_root,
+    config_file   => $config_file,
+    owner         => $owner,
+    group         => $group,
+    dhparams_file => $dhparams_file,
+  }
+  create_resources('hitch::domain', $domains, $domain_defaults)
 }

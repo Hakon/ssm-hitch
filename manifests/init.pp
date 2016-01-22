@@ -21,6 +21,7 @@ class hitch (
   $package_name      = $::hitch::params::package_name,
   $service_name      = $::hitch::params::service_name,
   $file_owner        = $::hitch::params::file_owner,
+  $file_group        = $::hitch::params::group,
   $config_file       = $::hitch::params::config_file,
   $dhparams_file     = $::hitch::params::dhparams_file,
   $dhparams_content  = $::hitch::params::dhparams,
@@ -36,7 +37,16 @@ class hitch (
   # validate parameters here
 
   class { '::hitch::install': } ->
-  class { '::hitch::config': } ~>
+  class { '::hitch::config':
+    config_root       => $config_root,
+    purge_config_root => $purge_config_root,
+    owner             => $file_owner,
+    group             => $file_group,
+    config_file       => $config_file,
+    dhparams_file     => $dhparams_file,
+    dhparams_content  => $dhparams_content,
+    domains           => $domains,
+  } ~>
   class { '::hitch::service': } ->
   Class['::hitch']
 }

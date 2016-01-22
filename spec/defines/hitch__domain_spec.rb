@@ -8,6 +8,9 @@ describe 'hitch::domain' do
           facts
         end
         let(:title) { 'example.com' }
+        let :pre_condition do
+          'include ::hitch::config'
+        end
 
         context "with all content parameters" do
           let(:params) do
