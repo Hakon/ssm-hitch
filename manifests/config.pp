@@ -3,14 +3,19 @@
 # This class is called from hitch for service config.
 #
 class hitch::config(
+  $frontend          = $::hitch::params::frontend,
+  $backend           = $::hitch::params::backend,
   $config_root       = $::hitch::params::config_root,
   $purge_config_root = $::hitch::params::purge_config_root,
-  $owner             = $::hitch::params::file_owner,
+  $file_owner        = $::hitch::params::file_owner,
+  $user              = $::hitch::params::user,
   $group             = $::hitch::params::group,
   $config_file       = $::hitch::params::config_file,
   $dhparams_file     = $::hitch::params::dhparams_file,
   $dhparams_content  = $::hitch::params::dhparams_content,
   $domains           = $::hitch::params::domains,
+  $write_proxy_v2    = $::hitch::params::write_proxy_v2,
+  $ciphers           = $::hitch::params::ciphers,
 ) inherits ::hitch::params {
 
   validate_absolute_path($config_root)
@@ -25,7 +30,7 @@ class hitch::config(
     ensure  => directory,
     recurse => true,
     purge   => $purge_config_root,
-    owner   => $owner,
+    owner   => $file_owner,
     group   => $group,
     mode    => '0750',
   }
@@ -37,7 +42,7 @@ class hitch::config(
   if $dhparams_content {
     file { $dhparams_file:
       ensure  => present,
-      owner   => $owner,
+      owner   => $file_owner,
       group   => $group,
       mode    => '0640',
       content => $dhparams_content,
@@ -52,7 +57,7 @@ class hitch::config(
     ->
     file { $dhparams_file:
       ensure => present,
-      owner  => $owner,
+      owner  => $file_owner,
       group  => $group,
       mode   => '0640',
     }
@@ -66,7 +71,7 @@ class hitch::config(
   $domain_defaults = {
     config_root   => $config_root,
     config_file   => $config_file,
-    owner         => $owner,
+    owner         => $file_owner,
     group         => $group,
     dhparams_file => $dhparams_file,
   }

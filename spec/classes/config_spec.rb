@@ -45,6 +45,20 @@ describe 'hitch::config' do
           it { is_expected.to contain_hitch__domain('example.com') }
           it { is_expected.to contain_file('/etc/hitch/example.com.pem') }
           it { is_expected.to contain_concat__fragment('hitch::domain example.com') }
+          it { is_expected.to contain_concat__fragment('hitch::config config').without_content(/write-proxy-v2 = "off"/) }
+        end
+
+        context "hitch::config class with write_proxy_v2" do
+          let(:params) do
+            {
+              config_root: "/etc/hitch",
+              config_file: "/etc/hitch/hitch.conf",
+              dhparams_file: "/etc/hitch/dhparams.pem",
+              write_proxy_v2: "on",
+              :domains => {}
+            }
+          end
+          it { is_expected.to contain_concat__fragment('hitch::config config').with_content(/write-proxy-v2 = "on"/) }
         end
       end
     end
