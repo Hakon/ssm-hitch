@@ -40,6 +40,10 @@ class hitch (
   class { '::hitch::config':
     config_root       => $config_root,
     purge_config_root => $purge_config_root,
+    frontend          => $frontend,
+    backend           => $backend,
+    write_proxy_v2    => $write_proxy_v2,
+    ciphers           => $ciphers,
     file_owner        => $file_owner,
     group             => $group,
     config_file       => $config_file,
